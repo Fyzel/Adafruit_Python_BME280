@@ -25,7 +25,6 @@
 import logging
 import time
 
-
 # BME280 default address.
 BME280_I2CADDR = 0x77
 
@@ -95,25 +94,25 @@ class BME280(object):
         self._logger = logging.getLogger('Adafruit_BMP.BMP085')
         # Check that t_mode is valid.
         if t_mode not in [BME280_OSAMPLE_1, BME280_OSAMPLE_2, BME280_OSAMPLE_4,
-                        BME280_OSAMPLE_8, BME280_OSAMPLE_16]:
+                          BME280_OSAMPLE_8, BME280_OSAMPLE_16]:
             raise ValueError(
                 'Unexpected t_mode value {0}.'.format(t_mode))
         self._t_mode = t_mode
         # Check that p_mode is valid.
         if p_mode not in [BME280_OSAMPLE_1, BME280_OSAMPLE_2, BME280_OSAMPLE_4,
-                        BME280_OSAMPLE_8, BME280_OSAMPLE_16]:
+                          BME280_OSAMPLE_8, BME280_OSAMPLE_16]:
             raise ValueError(
                 'Unexpected p_mode value {0}.'.format(p_mode))
         self._p_mode = p_mode
         # Check that h_mode is valid.
         if h_mode not in [BME280_OSAMPLE_1, BME280_OSAMPLE_2, BME280_OSAMPLE_4,
-                        BME280_OSAMPLE_8, BME280_OSAMPLE_16]:
+                          BME280_OSAMPLE_8, BME280_OSAMPLE_16]:
             raise ValueError(
                 'Unexpected h_mode value {0}.'.format(h_mode))
         self._h_mode = h_mode
         # Check that standby is valid.
         if standby not in [BME280_STANDBY_0p5, BME280_STANDBY_62p5, BME280_STANDBY_125, BME280_STANDBY_250,
-                        BME280_STANDBY_500, BME280_STANDBY_1000, BME280_STANDBY_10, BME280_STANDBY_20]:
+                           BME280_STANDBY_500, BME280_STANDBY_1000, BME280_STANDBY_10, BME280_STANDBY_20]:
             raise ValueError(
                 'Unexpected standby value {0}.'.format(standby))
         self._standby = standby
@@ -139,7 +138,8 @@ class BME280(object):
         self._device.write8(BME280_REGISTER_CONFIG, ((standby << 5) | (filter << 2)))
         time.sleep(0.002)
         self._device.write8(BME280_REGISTER_CONTROL_HUM, h_mode)  # Set Humidity Oversample
-        self._device.write8(BME280_REGISTER_CONTROL, ((t_mode << 5) | (p_mode << 2) | 3))  # Set Temp/Pressure Oversample and enter Normal mode
+        self._device.write8(BME280_REGISTER_CONTROL,
+                            ((t_mode << 5) | (p_mode << 2) | 3))  # Set Temp/Pressure Oversample and enter Normal mode
         self.t_fine = 0.0
 
     def _load_calibration(self):
@@ -170,7 +170,7 @@ class BME280(object):
         h5 = self._device.readS8(BME280_REGISTER_DIG_H6)
         h5 = (h5 << 4)
         self.dig_H5 = h5 | (
-        self._device.readU8(BME280_REGISTER_DIG_H5) >> 4 & 0x0F)
+            self._device.readU8(BME280_REGISTER_DIG_H5) >> 4 & 0x0F)
 
         '''
         print '0xE4 = {0:2x}'.format (self._device.readU8 (BME280_REGISTER_DIG_H4))
@@ -189,7 +189,9 @@ class BME280(object):
         """Waits for reading to become available on device."""
         """Does a single burst read of all data values from device."""
         """Returns the raw (uncompensated) temperature from the sensor."""
-        while (self._device.readU8(BME280_REGISTER_STATUS) & 0x08):    # Wait for conversion to complete (TODO : add timeout)
+        while (
+                    self._device.readU8(
+                        BME280_REGISTER_STATUS) & 0x08):  # Wait for conversion to complete (TODO : add timeout)
             time.sleep(0.002)
         self.BME280Data = self._device.readList(BME280_REGISTER_DATA, 8)
         raw = ((self.BME280Data[3] << 16) | (self.BME280Data[4] << 8) | self.BME280Data[5]) >> 4
@@ -215,7 +217,7 @@ class BME280(object):
         UT = float(self.read_raw_temp())
         var1 = (UT / 16384.0 - float(self.dig_T1) / 1024.0) * float(self.dig_T2)
         var2 = ((UT / 131072.0 - float(self.dig_T1) / 8192.0) * (
-        UT / 131072.0 - float(self.dig_T1) / 8192.0)) * float(self.dig_T3)
+            UT / 131072.0 - float(self.dig_T1) / 8192.0)) * float(self.dig_T3)
         self.t_fine = int(var1 + var2)
         temp = (var1 + var2) / 5120.0
         return temp
@@ -228,7 +230,7 @@ class BME280(object):
         var2 = var2 + var1 * float(self.dig_P5) * 2.0
         var2 = var2 / 4.0 + float(self.dig_P4) * 65536.0
         var1 = (
-               float(self.dig_P3) * var1 * var1 / 524288.0 + float(self.dig_P2) * var1) / 524288.0
+                   float(self.dig_P3) * var1 * var1 / 524288.0 + float(self.dig_P2) * var1) / 524288.0
         var1 = (1.0 + var1 / 32768.0) * float(self.dig_P1)
         if var1 == 0:
             return 0
@@ -244,8 +246,8 @@ class BME280(object):
         # print 'Raw humidity = {0:d}'.format (adc)
         h = float(self.t_fine) - 76800.0
         h = (adc - (float(self.dig_H4) * 64.0 + float(self.dig_H5) / 16384.0 * h)) * (
-        float(self.dig_H2) / 65536.0 * (1.0 + float(self.dig_H6) / 67108864.0 * h * (
-        1.0 + float(self.dig_H3) / 67108864.0 * h)))
+            float(self.dig_H2) / 65536.0 * (1.0 + float(self.dig_H6) / 67108864.0 * h * (
+                1.0 + float(self.dig_H3) / 67108864.0 * h)))
         h = h * (1.0 - float(self.dig_H1) * h / 524288.0)
         if h > 100:
             h = 100
